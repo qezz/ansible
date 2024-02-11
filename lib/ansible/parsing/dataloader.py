@@ -422,6 +422,9 @@ class DataLoader:
         extensions.
         """
 
+        import sys
+        print(f"dataloader::find_vars_files: path: {path}", file=sys.stderr)
+
         b_path = to_bytes(os.path.join(path, name))
         found = []
 
@@ -429,6 +432,8 @@ class DataLoader:
             # Look for file with no extension first to find dir before file
             extensions = [''] + C.YAML_FILENAME_EXTENSIONS
         # add valid extensions to name
+        print(f"dataloader::find_vars_files: extensions len: {len(extensions)}", file=sys.stderr)
+        print(f"dataloader::find_vars_files: extensions: {extensions}", file=sys.stderr)
         for ext in extensions:
 
             if '.' in ext:
@@ -441,6 +446,7 @@ class DataLoader:
             if self.path_exists(full_path):
                 if self.is_directory(full_path):
                     if allow_dir:
+                        print(f"dataloader::find_vars_files: try found.extend for full_path: {full_path}", file=sys.stderr)
                         found.extend(self._get_dir_vars_files(to_text(full_path), extensions))
                     else:
                         continue
@@ -450,6 +456,8 @@ class DataLoader:
         return found
 
     def _get_dir_vars_files(self, path: str, extensions: list[str]) -> list[str]:
+        import json
+        import sys
         found = []
         for spath in sorted(self.list_directory(path)):
             if not spath.startswith(u'.') and not spath.endswith(u'~'):  # skip hidden and backups
@@ -463,4 +471,7 @@ class DataLoader:
                     # only consider files with valid extensions or no extension
                     found.append(full_spath)
 
+        print(f"dataloader::_get_dir_vars_files: found len: {len(found)}", file=sys.stderr)
+        _found = json.dumps(found, indent=2)
+        print(f"dataloader::_get_dir_vars_files: found: {_found}", file=sys.stderr)
         return found

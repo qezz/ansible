@@ -27,10 +27,18 @@ def _prime_vars_loader():
 
 
 def get_plugin_vars(loader, plugin, path, entities):
+    import json
+    import sys
+    print(f"plugins::get_plugin_vars", file=sys.stderr)
+    print(f"plugins::get_plugin_vars: path: {path}", file=sys.stderr)
+    print(f"plugins::get_plugin_vars: plugin: {plugin.ansible_name}", file=sys.stderr)
 
     data = {}
     try:
+        print(f"plugins::get_plugin_vars::try: get_vars: path: {path}", file=sys.stderr)
         data = plugin.get_vars(loader, path, entities)
+        _keys = list(data.keys())
+        print(f"plugins::get_plugin_vars::try: get_vars: keys: {_keys}", file=sys.stderr)
     except AttributeError:
         if hasattr(plugin, 'get_host_vars') or hasattr(plugin, 'get_group_vars'):
             display.deprecated(
@@ -79,6 +87,8 @@ def _plugin_should_run(plugin, stage):
 
 
 def get_vars_from_path(loader, path, entities, stage):
+    import json
+    import sys
     data = {}
     if vars_loader._paths is None:
         # cache has been reset, reload all()
@@ -100,15 +110,33 @@ def get_vars_from_path(loader, path, entities, stage):
             continue
 
         if (new_vars := get_plugin_vars(loader, plugin, path, entities)) != {}:
+            print(f"plugins::get_vars_from_path::if", file=sys.stderr)
+            print(f"plugins::get_vars_from_path: path: {path}", file=sys.stderr)
+            print(f"plugins::get_vars_from_path: plugin: {plugin.ansible_name}", file=sys.stderr)
+            # print(f"base:\n{json.dumps([data.keys()], indent=2)}\n\n", file=sys.stderr)
+            # print(f"new_vars:\n{json.dumps([new_vars.keys()], indent=2)}", file=sys.stderr)
+            print(f"\n", file=sys.stderr)
+
             data = combine_vars(data, new_vars)
 
     return data
 
 
 def get_vars_from_inventory_sources(loader, sources, entities, stage):
+    import json
+    import sys
+    _sources = json.dumps(sources, indent=2)
+    # _entities = json.dumps(entities, indent=2)
+    print(f"plugins::get_vars_from_inventory_sources", file=sys.stderr)
+    print(f"stage: {stage}", file=sys.stderr)
+    print(f"sources:\n{_sources}", file=sys.stderr)
+    print(f"entities:", file=sys.stderr) # \n{_entities}", file=sys.stderr)
+    for entity in entities:
+        print(f"  {entity}", file=sys.stderr)
 
     data = {}
     for path in sources:
+        # print(f"  path: {path}", file=sys.stderr)
 
         if path is None:
             continue
@@ -119,6 +147,14 @@ def get_vars_from_inventory_sources(loader, sources, entities, stage):
             path = os.path.dirname(path)
 
         if (new_vars := get_vars_from_path(loader, path, entities, stage)) != {}:
+            # print(f"base:\n{json.dumps(data, indent=2)}\n\n", file=sys.stderr)
+            # print(f"new_vars:\n{json.dumps(new_vars, indent=2)}", file=sys.stderr)
+            # print(f"\n", file=sys.stderr)
             data = combine_vars(data, new_vars)
+            _vars = json.dumps(data, indent=2)
+            # print(f"if: data:\n{_vars}", file=sys.stderr)
+            print("loaded: keys: ", list(data.keys()), file=sys.stderr)
+            raise Exception("stop")
 
+    print(f"return:  data:\n{json.dumps(data, indent=2)}", file=sys.stderr)
     return data

@@ -1,6 +1,7 @@
 # Copyright (c) 2017 Ansible Project
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 from __future__ import annotations
+import sys
 
 DOCUMENTATION = '''
     name: ini
@@ -101,6 +102,7 @@ class InventoryModule(BaseFileInventoryPlugin):
         self._filename = None
 
     def parse(self, inventory, loader, path, cache=True):
+        print(f"calling parse() with path:\n  {path}", file=sys.stderr)
 
         super(InventoryModule, self).parse(inventory, loader, path)
 
@@ -132,6 +134,7 @@ class InventoryModule(BaseFileInventoryPlugin):
                         # Non-comment lines still have to be valid uf-8
                         data.append(to_text(line, errors='surrogate_or_strict'))
 
+            print(f"calling _parse() with path:\n  {path}", file=sys.stderr)
             self._parse(path, data)
         except Exception as e:
             raise AnsibleParserError(e)
@@ -144,6 +147,8 @@ class InventoryModule(BaseFileInventoryPlugin):
         Populates self.groups from the given array of lines. Raises an error on
         any parse failure.
         '''
+
+        print(f"path: {path}", file=sys.stderr)
 
         self._compile_patterns()
 

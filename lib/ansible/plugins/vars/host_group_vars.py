@@ -17,6 +17,8 @@
 #############################################
 from __future__ import annotations
 
+from ansible.utils.display import textwrap
+
 DOCUMENTATION = '''
     name: host_group_vars
     version_added: "2.4"
@@ -81,6 +83,13 @@ class VarsModule(BaseVarsPlugin):
     def get_vars(self, loader, path, entities, cache=True):
         ''' parses the inventory file '''
 
+        import json
+        import sys
+        print("\n")
+        print(f"host_group_vars::get_vars", file=sys.stderr)
+        print(f"host_group_vars::get_vars: path: {path}", file=sys.stderr)
+        print(f"host_group_vars::get_vars: entities: {entities}", file=sys.stderr)
+
         if not isinstance(entities, list):
             entities = [entities]
 
@@ -90,12 +99,16 @@ class VarsModule(BaseVarsPlugin):
         except KeyError:
             CANONICAL_PATHS[path] = realpath_basedir = os.path.realpath(basedir(path))
 
+        print(f"host_group_vars::get_vars: realpath_basedir: {realpath_basedir}", file=sys.stderr)
+
         data = {}
         for entity in entities:
             try:
                 entity_name = entity.name
             except AttributeError:
                 raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
+
+            print(f"host_group_vars::get_vars: entity_name: {entity_name}", file=sys.stderr)
 
             try:
                 first_char = entity_name[0]
@@ -119,6 +132,19 @@ class VarsModule(BaseVarsPlugin):
                     else:
                         raise AnsibleParserError("Supplied entity must be Host or Group, got %s instead" % (type(entity)))
 
+                    print(f"host_group_vars::get_vars: subdir: {subdir}", file=sys.stderr)
+                    print(
+                        textwrap.dedent(
+                            f"""\
+                            class InventoryObjectType(Enum):
+                                HOST = 0
+                                GROUP = 1"""
+                        ),
+                        file=sys.stderr
+                    )
+
+                    print(f"host_group_vars::get_vars: entity_type: {entity_type}", file=sys.stderr)
+
                     if cache:
                         try:
                             opath = PATH_CACHE[(realpath_basedir, subdir)]
@@ -136,6 +162,9 @@ class VarsModule(BaseVarsPlugin):
 
                     if os.path.isdir(opath):
                         self._display.debug("\tprocessing dir %s" % opath)
+                        print(f"host_group_vars::get_vars: processing dir {opath}", file=sys.stderr)
+
+                        print(f"host_group_vars::get_vars: trying loader.find_vars_files({opath}, {entity_name})", file=sys.stderr)
                         FOUND[key] = found_files = loader.find_vars_files(opath, entity_name)
                     elif not os.path.exists(opath):
                         # cache missing dirs so we don't have to keep looking for things beneath the
